@@ -1,0 +1,774 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7a30e5a2-e7a0-4c9d-b3af-2f4329428380",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ",
+          "mode": "list",
+          "cachedResultName": "CRM Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c3f10fe9-5dbb-45f1-a06b-f9d128650661",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "p689TciQW89IMq8j",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = Date.now();\nreturn $input.all().filter(i => {\n  const r = i.json;\n  const active = ['New', 'Contacted'].includes(r.status);\n  const step = Number(r.step || 0);\n  const due = !r.next_send || new Date(r.next_send).getTime() <= now;\n  return r.email && active && step < 3 && due;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "420bf8fa-b090-40a9-98c2-c6939c481ea2",
+      "name": "Due?"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Thanks for getting in touch, {{ ($json.name || 'there').split(' ')[0] }}",
+        "message": "=Hi {{ ($json.name || 'there').split(' ')[0] }},  Thanks for reaching out. I'd be glad to help.  To point you in the right direction, could you tell me two things? 1. What would you like to get done? 2. When would you like to start?  Just reply to this email and I'll take it from there.  Best regards, Yogesh Arumugam  Not interested? Reply STOP and I won't email you again.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        -112
+      ],
+      "id": "dbc4b8ef-a22d-4272-9cb2-a66631087602",
+      "name": "Send a message",
+      "webhookId": "92dba7a2-0678-4014-9ec9-ab2571a8db05",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vwb3G3ujJjc0Xxd7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Quick follow-up, {{ ($json.name || 'there').split(' ')[0] }}",
+        "message": "=Quick follow-up, {{ ($json.name || 'there').split(' ')[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "952f3f32-45f4-4438-adcc-59c38af43550",
+      "name": "Send a message1",
+      "webhookId": "6902f250-036e-4d4c-87de-3f4c254f5e63",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vwb3G3ujJjc0Xxd7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ",
+          "mode": "list",
+          "cachedResultName": "CRM Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "step": "={{ Number($('Which Step?').item.json.step || 0) + 1 }}",
+            "last_send": "={{ $now.toISO() }}",
+            "next_send": "={{ $now.plus({ days: 2 }).toISO() }}",
+            "status": "Contacted",
+            "email": "={{ $('Get row(s) in sheet').item.json.email }}"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "name ",
+              "displayName": "name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "temperature",
+              "displayName": "temperature",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "reason ",
+              "displayName": "reason ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "next_send",
+              "displayName": "next_send",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_send",
+              "displayName": "last_send",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "hubspot_id",
+              "displayName": "hubspot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        -112
+      ],
+      "id": "6e15582d-6267-47e8-bef7-42f2d52a3cd2",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "p689TciQW89IMq8j",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ Number($json.step || 0) }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    },
+                    "id": "a2ddd3b4-e541-4183-816c-e69538688237"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "b2933984-d3f5-4067-8f4a-c8c913a10ae4",
+                    "leftValue": "={{ Number($json.step || 0) }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "ff4dd8ec-23fb-46be-9bf9-750c3ac0dd03",
+                    "leftValue": "={{ Number($json.step || 0) }}",
+                    "rightValue": 2,
+                    "operator": {
+                      "type": "number",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "7b4f8a77-0415-456b-8d30-23e891accfa2",
+      "name": "Which Step?"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "includeSpamTrash": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        1008,
+        400
+      ],
+      "id": "2f12ab25-3bb9-4bdc-8905-3ae83e7bd620",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vwb3G3ujJjc0Xxd7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const from = $json.From || $json.from || ''; const m = from.match(/<(.+?)>/); return [{ json: { email: (m ? m[1] : from).trim().toLowerCase() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        400
+      ],
+      "id": "42aa9079-1acf-445c-be62-848dc3b074ce",
+      "name": "Sender Email"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ",
+          "mode": "list",
+          "cachedResultName": "CRM Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/14miaFNiH8VpwXixSuauezVZsZhFUKCutqTHnxx4BjuQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email": "={{ $json.email }}",
+            "status": "Replied"
+          },
+          "matchingColumns": [
+            "email"
+          ],
+          "schema": [
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "name ",
+              "displayName": "name ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "temperature",
+              "displayName": "temperature",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "reason ",
+              "displayName": "reason ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "step",
+              "displayName": "step",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "next_send",
+              "displayName": "next_send",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "last_send",
+              "displayName": "last_send",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "hubspot_id",
+              "displayName": "hubspot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1456,
+        400
+      ],
+      "id": "014ce89c-8c8e-45db-bd81-188e9bc7cf6f",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "p689TciQW89IMq8j",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Closing the loop, {{ ($json.name || 'there').split(' ')[0] }}",
+        "message": "=Hi {{ ($json.name || 'there').split(' ')[0] }},  This is my last message so I don't fill up your inbox. I'll close your request for now.  If you'd like to continue, just reply to this email at any time and I'll pick it up.  Best regards, Yogesh Arumugam  Not interested? Reply STOP and I won't email you again.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        176
+      ],
+      "id": "03f1a140-4631-43e9-8ff3-fc4902fec351",
+      "name": "Send a message2",
+      "webhookId": "b8b0876f-604b-43a3-9ce2-a6de6e030918",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "vwb3G3ujJjc0Xxd7",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Due?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Due?": {
+      "main": [
+        [
+          {
+            "node": "Which Step?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Which Step?": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Sender Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sender Email": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9015a6ac-a2e0-4f4a-b083-b012634866bd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "92a312cfa3ab3d5cff319c0b45c633eeb006d7b1c775f1f5385b078228d6ea6b"
+  },
+  "nodeGroups": [],
+  "id": "8RkwxE6o76ZzIH1N",
+  "tags": []
+}
